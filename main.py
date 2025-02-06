@@ -1,6 +1,6 @@
 #!/bin/env python3
 from sys import argv
-
+from sys import stderr
 
 def valid_func(line: str):
     funcs = ["@cm"]
@@ -31,8 +31,12 @@ def run_func(args):
     if func == "@cm":
         file = args[0][1:-1]
         args = args[1:]
-        print(f"Running template {file} with args {args}")
-        return entry(file)
+        args = [arg[2:-1] for arg in args] # strip surrounding ""
+        print(f"Running template {file} with args {args}", file=stderr)
+        processed = entry(file)
+        proc = subprocess.Popen(["tcc", "-run", "-x", "c", "-", *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        out = proc.communicate(input=bytes(processed, "utf-8"))[0]
+        return out.decode("utf-8")
 
     raise Exception(f"Unknown macro function {func}")
 
@@ -58,7 +62,6 @@ def expand_file(fileText):
 import subprocess
 
 def run_preprocessor(path):
-    import os
     proc = subprocess.Popen(["clang", "-E", "-x", "c", f"{path}"], stdout=subprocess.PIPE)
     out = proc.communicate()[0]
     return out
@@ -68,10 +71,10 @@ def entry(path):
     path = os.getcwd() + "/" + path
     pp = run_preprocessor(path).decode("utf-8")
     cwd = os.getcwd()
-    print(path)
     os.chdir(os.path.dirname(path))
     expanded = expand_file(pp)
-    os.chdir(os.getcwd())
+    # print(expanded)
+    os.chdir(cwd)
     return expanded
 
 path = argv[1]
