@@ -3,7 +3,7 @@ from sys import argv
 from sys import stderr
 
 def valid_func(line: str):
-    funcs = ["@cm"]
+    funcs = ["@mixin", "@system", "@embed", "@length"]
     vars = []
     for func in funcs:
         if line.startswith(func):
@@ -23,20 +23,40 @@ def get_call(line: str):
         raise Exception("Expected closing ) for macro call")
     argsStr = line.split("(")[1][:end - len(funcname) - 1] # )
     args = [funcname, *argsStr.split(",")]
-    return args
+    return (args, "(".join(line.split("(")[1:])[end - len(funcname):]) # )
 
-def run_func(args):
+def run_func(args, origin=""):
     func = args[0]
     args = args[1:]
-    if func == "@cm":
+    if func == "@mixin":
         file = args[0][1:-1]
         args = args[1:]
-        args = [arg[2:-1] for arg in args] # strip surrounding ""
-        print(f"Running template {file} with args {args}", file=stderr)
+        args = [arg.strip()[1:-1] for arg in args] # strip surrounding ""
+        # print(f"Running template {file} with args {args}", file=stderr)
         processed = entry(file)
         proc = subprocess.Popen(["tcc", "-run", "-x", "c", "-", *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         out = proc.communicate(input=bytes(processed, "utf-8"))[0]
+        if proc.returncode != 0:
+            if origin != "":
+                func = origin
+            raise Exception(f"Macro function '{func}' exited with return code {proc.returncode}.")
         return out.decode("utf-8")
+    if func == "@system":
+        file = args[0][1:-1]
+        args = args[1:]
+        args = [arg.strip()[1:-1] for arg in args] # strip surrounding ""
+        processed = entry(f"/usr/local/include/cmixins/{file}")
+        proc = subprocess.Popen(["tcc", "-run", "-x", "c", "-", *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        out = proc.communicate(input=bytes(processed, "utf-8"))[0]
+        if proc.returncode != 0:
+            if origin != "":
+                func = origin
+            raise Exception(f"Macro function '{func}' exited with return code {proc.returncode}.")
+        return out.decode("utf-8")
+    if func == "@embed":
+        return run_func(["@system", "\"embed.cm\"", args[0]], func)
+    if func == "@length":
+        return run_func(["@system", "\"length.cm\"", args[0]], func)
 
     raise Exception(f"Unknown macro function {func}")
 
@@ -46,8 +66,10 @@ def expand_line(line: str):
         return line
     if start == 0:
         if valid_func(line):
-            funcCall = get_call(line)
-            return run_func(funcCall)
+            funcCall, right = get_call(line)
+            return run_func(funcCall) + expand_line(right)
+        else:
+            return line
     left = line[:start]
     right = expand_line(line[start:])
     return left + right
@@ -68,7 +90,8 @@ def run_preprocessor(path):
 
 def entry(path):
     import os
-    path = os.getcwd() + "/" + path
+    if not path.startswith("/"):
+        path = os.getcwd() + "/" + path
     pp = run_preprocessor(path).decode("utf-8")
     cwd = os.getcwd()
     os.chdir(os.path.dirname(path))

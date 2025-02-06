@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
+
+int main(int argc, char **argv)
+{
+	if (argc != 2)
+		return 1;
+	FILE *f = fopen(argv[1], "rb");
+	if (!f)
+		return 1;
+	printf("\"");
+	char buf[1024];
+	while (1) {
+		size_t readCount = fread(buf, 1, 1024, f);
+		size_t binaryCount = 0;
+		for (size_t i = 0; i < readCount; ++i)
+			if (!isprint(buf[i]))
+				++binaryCount;
+		bool binMode = false;
+		if (100 * binaryCount / readCount >= 25)
+			binMode = true;
+		for (size_t i = 0; i < readCount; ++i) {
+			if (binMode) {
+				printf("\\x%02X", buf[i]);
+				if (i == readCount - 1) {
+					printf("\"\"");
+				}
+			} else {
+				if (isprint(buf[i])) {
+					if (buf[i] == '\\' || buf[i] == '\'' || buf[i] == '\"') {
+						printf("\\%c", buf[i]);
+					} else {
+						printf("%c", buf[i]);
+					}
+				} else {
+					printf("\"\"\\x%02X\"\"", buf[i]);
+				}
+			}
+		}
+		if (readCount < 1024)
+			break;
+	}
+	printf("\"");
+	return 0;
+}
