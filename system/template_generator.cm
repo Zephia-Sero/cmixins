@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 	printf("#include <stdio.h>\n");
 	printf("#include <stdlib.h>\n");
 	printf("#include <string.h>\n");
-	printf("#include \"system/identptrconv.h\"\n\n");
+	printf("#include \"identptrconv.h\"\n\n");
 	printf("static char const *const template = @" "embed" "(\"%s\");\n\n", argv[1]);
 	unsigned int minArgs = argc - 2;
 	unsigned int maxArgs = argc - 2;

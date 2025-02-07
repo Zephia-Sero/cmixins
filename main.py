@@ -4,7 +4,7 @@ from sys import stderr
 from typing import Dict
 
 passCount = []
-passLimit = 1
+passLimit = 10
 hasMixins = []
 includedCache: Dict[str, str] = {}
 binaryCache = {}
@@ -44,7 +44,7 @@ def make_binary(path):
     source = entry(path)
     proc = subprocess.Popen(["mktemp", "-t", "cmixins.cachedBinary.XXXXXXXX"], stdout=subprocess.PIPE)
     tmpF = proc.communicate()[0].strip()
-    proc = subprocess.Popen(["tcc", "-O3", "-o", tmpF, "-x", "c", "-"], stdin=subprocess.PIPE)
+    proc = subprocess.Popen(["tcc", "-O3", "-o", tmpF, "-x", "c", "-I", "/usr/local/include/cmixins/", "-"], stdin=subprocess.PIPE)
     proc.communicate(input=bytes(source, "utf-8"))
     binaryCache[path] = tmpF
     return tmpF
@@ -87,11 +87,11 @@ def run_func(args, origin=""):
         return out.decode("utf-8")
     if func == "@include":
         file = args[0][1:-1]
-        source = entry(file, False)
+        source = entry(file)
         return source
     if func == "@includesys":
         file = f"/usr/local/include/cmixins/include/{args[0][1:-1]}"
-        source = entry(file, False)
+        source = entry(file)
         return source
     if func == "@embed":
         return run_func(["@mixinsys", "\"embed.cm\"", args[0]], func)
@@ -137,7 +137,7 @@ def run_preprocessor(path):
     return out
 
 @line_profiler.profile
-def entry(path, preprocess=True) -> str:
+def entry(path) -> str:
     global passCount
     passCount.append(0)
     import os
@@ -145,28 +145,26 @@ def entry(path, preprocess=True) -> str:
         path = os.getcwd() + "/" + path
     if path in includedCache.keys():
         return includedCache[path]
-    pp = ""
-    if preprocess:
-        pp = run_preprocessor(path).decode("utf-8")
-    else:
-        with open(path, "r") as f:
-            pp = f.read()
+    source = ""
+    with open(path, "r") as f:
+        source = f.read()
     cwd = os.getcwd()
     os.chdir(os.path.dirname(path))
+    print(os.getcwd(), "processing", path)
     global hasMixins
     hasMixins.append(True)
     while hasMixins[-1] and passCount[-1] < passLimit:
         hasMixins[-1] = False
-        pp = expand_file(pp)
+        source = expand_file(source)
         passCount[-1] += 1
     passCount = passCount[:-1]
     hasMixins = hasMixins[:-1]
-    includedCache[path] = pp
+    includedCache[path] = source
     os.chdir(cwd)
-    return pp
+    return source
 
 path = argv[1]
-print(entry(path, False))
+print(entry(path))
 
 for path in binaryCache.values():
     import os
