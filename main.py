@@ -9,7 +9,7 @@ import line_profiler
 
 @line_profiler.profile
 def valid_func(line: str):
-    funcs = ["@mixin", "@mixinsys", "@include", "@includesys",
+    funcs = ["@mixinsys", "@mixin","@includesys", "@include",
              "@embed", "@length"]
     vars = []
     for func in funcs:
@@ -76,11 +76,11 @@ def run_func(args, origin=""):
         return out.decode("utf-8")
     if func == "@include":
         file = args[0][1:-1]
-        source = entry(file)
+        source = entry(file, False)
         return source
     if func == "@includesys":
         file = f"/usr/local/include/cmixins/include/{args[0][1:-1]}"
-        source = entry(file)
+        source = entry(file, False)
         return source
     if func == "@embed":
         return run_func(["@mixinsys", "\"embed.cm\"", args[0]], func)
@@ -121,13 +121,18 @@ def run_preprocessor(path):
     return out
 
 @line_profiler.profile
-def entry(path) -> str:
+def entry(path, preprocess=True) -> str:
     import os
     if not path.startswith("/"):
         path = os.getcwd() + "/" + path
     if path in includedCache.keys():
         return includedCache[path]
-    pp = run_preprocessor(path).decode("utf-8")
+    pp = ""
+    if preprocess:
+        pp = run_preprocessor(path).decode("utf-8")
+    else:
+        with open(path, "r") as f:
+            pp = f.read()
     cwd = os.getcwd()
     os.chdir(os.path.dirname(path))
     expanded = expand_file(pp)
@@ -136,7 +141,7 @@ def entry(path) -> str:
     return expanded
 
 path = argv[1]
-print(entry(path))
+print(entry(path, False))
 
 for path in binaryCache.values():
     import os
