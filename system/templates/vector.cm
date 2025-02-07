@@ -1,0 +1,172 @@
+typedef struct %1$s { size_t length, capacity; %2$s *list; } %1$s;
+static inline %1$s %1$s_new(size_t initialCapacity)
+{
+	%1$s this;
+	this.length = 0;
+	this.capacity = initialCapacity;
+	this.list = malloc(sizeof(%2$s) * this.capacity);
+	if (!this.list)
+		err(1, "Failed to allocate %1$s when constructing");
+	return this;
+}
+
+static inline void %1$s_resize_to_fit(%1$s *this, size_t length)
+{
+	// already the right size
+	if (length <= this->capacity)
+		return;
+	if (this->capacity == 0)
+		this->capacity = 1;
+	while (this->capacity < length)
+		this->capacity *= 2;
+	%2$s *newList = realloc(this->list, this->capacity);
+	if (!newList)
+		err(1, "Failed to reallocate %1$s when resizing to fit %%lu elements (new capacity %%lu)", length, this->capacity);
+	this->list = newList;
+}
+
+static inline void %1$s_push(%1$s *this, %2$s value)
+{
+	%1$s_resize_to_fit(this, this->length + 1);
+	this->list[this->length++] = value;
+}
+
+static inline %2$s %1$s_pop(%1$s *this)
+{
+	if (this->length == 0)
+		errx(1, "Pop attempted from empty %1$s");
+	return this->list[--this->length];
+}
+
+static inline %2$s %1$s_get(%1$s *this, size_t index)
+{
+	if (index >= this->length)
+		errx(1, "Attempted read from out of bounds index from %1$s (%%lu >= %%lu)", index, this->length);
+	return this->list[index];
+}
+
+static inline %2$s *%1$s_getp(%1$s *this, size_t index)
+{
+	if (index >= this->length)
+		errx(1, "Attempted read from out of bounds index from %1$s (%%lu >= %%lu)", index, this->length);
+	return &this->list[index];
+}
+
+static inline void %1$s_set(%1$s *this, size_t index, %2$s value)
+{
+	if (index >= this->length)
+		errx(1, "Attempted write to out of bounds index of %1$s (%%lu >= %%lu)", index, this->length);
+	this->list[index] = value;
+}
+
+static inline %1$s %1$s_copy(%1$s *this)
+{
+	%1$s ret;
+	ret.capacity = this->capacity;
+	ret.length = this->length;
+	ret.list = malloc(sizeof(%2$s) * ret.capacity);
+	if (!ret.list)
+		err(1, "Failed to allocate when copying %1$s");
+	memcpy(ret.list, this->list, sizeof(%2$s) * ret.capacity);
+	return ret;
+}
+
+// [startIdx, endIdx)
+static inline %1$s %1$s_get_slice(%1$s *this, size_t startIdx, size_t endIdx)
+{
+	%1$s ret;
+	ret.capacity = endIdx - startIdx;
+	ret.length = endIdx - startIdx;
+	if (startIdx >= this->length)
+		errx(1, "Attempted slice starting at out of bounds index of %1$s (%%lu >= %%lu)", startIdx, this->length);
+	if (endIdx > this->length)
+		errx(1, "Attempted slice ending at out of bounds index of %1$s (%%lu >= %%lu)", endIdx, this->length);
+	ret.list = malloc(sizeof(%2$s) * ret.capacity);
+	if (!ret.list)
+		err(1, "Failed to allocate when getting slice of %1$s");
+	for (size_t i = startIdx; i < endIdx; ++i)
+		ret.list[i - startIdx] = this->list[i];
+	return ret;
+}
+
+// [startIdx, endIdx)
+static inline %1$s %1$s_remove_slice(%1$s *this, size_t startIdx, size_t endIdx)
+{
+	%1$s ret;
+	ret.capacity = endIdx - startIdx;
+	ret.length = endIdx - startIdx;
+	if (startIdx >= this->length)
+		errx(1, "Attempted slice starting at out of bounds index of %1$s (%%lu >= %%lu)", startIdx, this->length);
+	if (endIdx > this->length)
+		errx(1, "Attempted slice ending at out of bounds index of %1$s (%%lu >= %%lu)", endIdx, this->length);
+	ret.list = malloc(sizeof(%2$s) * ret.capacity);
+	if (!ret.list)
+		err(1, "Failed to allocate when getting slice of %1$s");
+	for (size_t i = startIdx; i < endIdx; ++i)
+		ret.list[i - startIdx] = this->list[i];
+	// shift over last elements
+	memmove(&this->list[startIdx], &this->list[endIdx], this->length - endIdx);
+	this->length -= ret.length;
+	return ret;
+}
+
+static inline %2$s %1$s_remove(%1$s *this, size_t index)
+{
+	if (index >= this->length)
+		errx(1, "Attempted remove out of bounds index of %1$s (%%lu >= %%lu)", index, this->length);
+	// shift over last elements
+	%2$s value = this->list[index];
+	memmove(&this->list[index], &this->list[index+1], this->length - index - 1);
+	--this->length;
+	return value;
+}
+
+static inline void %1$s_insert(%1$s *this, %2$s value, size_t index)
+{
+	// inserting to end should be allowed, since that's just a push
+	if (index == this->length) {
+		%1$s_push(this, value);
+		return;
+	}
+	if (index > this->length)
+		err(1, "Attempted insert to out of bounds index of %1$s (%%lu > %%lu)", index, this->length);
+
+	// handle expanding the list
+	%1$s_resize_to_fit(this, this->length + 1);
+	// shift elements over to the right by one
+	memmove(&this->list[index+1], &this->list[index], this->length - index);
+	this->list[index] = value;
+	++this->length;
+}
+
+static inline void %1$s_push_slice(%1$s *this, %1$s *value)
+{
+	%1$s_resize_to_fit(this, this->length + value->length);
+	for (size_t i = 0; i < value->length; ++i)
+		this->list[this->length++] = value->list[i];
+}
+
+static inline void %1$s_insert_slice(%1$s *this, %1$s *value, size_t index)
+{
+	// inserting to end should be allowed, since that's just a push
+	if (index == this->length) {
+		%1$s_push_slice(this, value);
+		return;
+	}
+	if (index > this->length)
+		err(1, "Attempted insert to out of bounds index of %1$s (%%lu > %%lu)", index, this->length);
+
+	// handle expanding the list
+	%1$s_resize_to_fit(this, this->length + value->length);
+	// shift elements over to the right by count
+	memmove(&this->list[index + value->length], &this->list[index], this->length - index);
+	for (size_t i = 0; i < value->length; ++i)
+		this->list[index+i] = value->list[i];
+	this->length += value->length;
+}
+
+static inline void %1$s_apply(%1$s *this, %2$s (*func)(%2$s x))
+{
+	for (size_t i = 0; i < this->length; ++i)
+		this->list[i] = func(this->list[i]);
+}

@@ -1,0 +1,30 @@
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "identptrconv.h"
+
+static char const *const hashTemplate = @embed("templates/hashmap.cm");
+
+int main(int argc, char **argv)
+{
+	if (argc < 4 || argc > 5)
+		return 1;
+	char *keyType = argv[1];
+	char *valueType = argv[2];
+	char *hashFunc = argv[3];
+	char *keySuffix = strdup(identptrconv(keyType));
+	char *valueSuffix = strdup(identptrconv(valueType));
+	char kvpName[1024];
+	snprintf(kvpName, 1024, "KVPair_%s_%s", keySuffix, valueSuffix);
+	if (argc == 4) {
+		char name[1024];
+		snprintf(name, 1024, "HashMap_%s_%s_%s", keySuffix, valueSuffix, hashFunc);
+		printf(hashTemplate, name, kvpName, keyType, valueType, hashFunc);
+	} else if (argc == 5) {
+		char *name = argv[4];
+		printf(hashTemplate, name, kvpName, keyType, valueType, hashFunc);
+	}
+	free(keySuffix);
+	free(valueSuffix);
+	return 0;
+}

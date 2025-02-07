@@ -1,0 +1,67 @@
+#ifndef STRING_CM
+#define STRING_CM
+
+#include <stdlib.h>
+#include <err.h>
+#include <string.h>
+#include <ctype.h>
+
+@mixin("../vector.cm", "char", "String");
+
+static inline void String_upperify(String *this)
+{
+	for (size_t i = 0; i < this->length; ++i) {
+		char c = this->list[i];
+		if (islower(c))
+			this->list[i] -= ('a' - 'A');
+	}
+}
+
+static inline void String_lowerify(String *this)
+{
+	for (size_t i = 0; i < this->length; ++i) {
+		char c = this->list[i];
+		if (isupper(c))
+			this->list[i] += ('a' - 'A');
+	}
+}
+
+static inline String String_upper(String *this)
+{
+	String ret = String_copy(this);
+	String_upperify(&ret);
+	return ret;
+}
+
+static inline String String_lower(String *this)
+{
+	String ret = String_copy(this);
+	String_lowerify(&ret);
+	return ret;
+}
+
+static inline String String_from_cstr(char *cstr)
+{
+	String ret = String_new(strlen(cstr));
+	ret.length = ret.capacity;
+	for (size_t i = 0; i < ret.length; ++i)
+		ret.list[i] = cstr[i];
+	return ret;
+}
+
+// Not thread safe.
+static inline char *String_to_cstr(String *this)
+{
+	static char cstr[65536];
+	size_t i = 0;
+	for (; i < 65535; ++i) {
+		if (i >= this->length)
+			break;
+		cstr[i] = this->list[i];
+	}
+	cstr[i] = '\0';
+	return cstr;
+}
+
+
+#endif

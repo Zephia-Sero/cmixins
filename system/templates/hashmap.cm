@@ -1,0 +1,18 @@
+// This is a cmixins system file
+// On Linux this should be /usr/include/cmixins/templates/hashmap.cm
+// (or /usr/local/include/...)
+
+// args are name, kvpName, keyType, valueType, hashFunc
+
+#define NAME %1$s
+#define KVP %2$s
+#define KEY %3$s
+#define VALUE %4$s
+#define HASHFUNC %5$s
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct KVP { uint64_t fastKey; KEY key; VALUE value; } KVP;
+

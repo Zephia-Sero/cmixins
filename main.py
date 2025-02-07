@@ -3,6 +3,9 @@ from sys import argv
 from sys import stderr
 from typing import Dict
 
+passCount = []
+passLimit = 1
+hasMixins = []
 includedCache: Dict[str, str] = {}
 binaryCache = {}
 import line_profiler
@@ -10,6 +13,7 @@ import line_profiler
 @line_profiler.profile
 def valid_func(line: str):
     funcs = ["@mixinsys", "@mixin","@includesys", "@include",
+             "@setting",
              "@embed", "@length"]
     vars = []
     for func in funcs:
@@ -49,6 +53,13 @@ def make_binary(path):
 def run_func(args, origin=""):
     func = args[0]
     args = args[1:]
+    if func == "@setting":
+        key = args[0][1:-1]
+        value = args[1].strip()[1:-1]
+        if key == "pass-limit":
+            global passLimit
+            passLimit = int(value)
+        return None
     if func == "@mixin":
         file = args[0][1:-1]
         args = args[1:]
@@ -96,8 +107,13 @@ def expand_line(line: str):
         return line
     if start == 0:
         if valid_func(line):
+            global hasmixins
+            hasMixins[-1] = True
             funcCall, right = get_call(line)
-            return run_func(funcCall) + expand_line(right)
+            funcReturn = run_func(funcCall)
+            if funcReturn is None:
+                return expand_line(right)
+            return funcReturn + expand_line(right)
         else:
             return line
     left = line[:start]
@@ -122,6 +138,8 @@ def run_preprocessor(path):
 
 @line_profiler.profile
 def entry(path, preprocess=True) -> str:
+    global passCount
+    passCount.append(0)
     import os
     if not path.startswith("/"):
         path = os.getcwd() + "/" + path
@@ -135,10 +153,17 @@ def entry(path, preprocess=True) -> str:
             pp = f.read()
     cwd = os.getcwd()
     os.chdir(os.path.dirname(path))
-    expanded = expand_file(pp)
-    includedCache[path] = expanded
+    global hasMixins
+    hasMixins.append(True)
+    while hasMixins[-1] and passCount[-1] < passLimit:
+        hasMixins[-1] = False
+        pp = expand_file(pp)
+        passCount[-1] += 1
+    passCount = passCount[:-1]
+    hasMixins = hasMixins[:-1]
+    includedCache[path] = pp
     os.chdir(cwd)
-    return expanded
+    return pp
 
 path = argv[1]
 print(entry(path, False))
