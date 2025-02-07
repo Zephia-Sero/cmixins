@@ -2,6 +2,8 @@
 from sys import argv
 from sys import stderr
 
+includedCache = {}
+
 def valid_func(line: str):
     funcs = ["@mixin", "@system", "@embed", "@length"]
     vars = []
@@ -84,7 +86,7 @@ def expand_file(fileText):
 import subprocess
 
 def run_preprocessor(path):
-    proc = subprocess.Popen(["clang", "-E", "-x", "c", f"{path}"], stdout=subprocess.PIPE)
+    proc = subprocess.Popen(["tcc", "-E", "-x", "c", f"{path}"], stdout=subprocess.PIPE)
     out = proc.communicate()[0]
     return out
 
@@ -92,11 +94,13 @@ def entry(path):
     import os
     if not path.startswith("/"):
         path = os.getcwd() + "/" + path
+    if path in includedCache.keys():
+        return includedCache[path]
     pp = run_preprocessor(path).decode("utf-8")
     cwd = os.getcwd()
     os.chdir(os.path.dirname(path))
     expanded = expand_file(pp)
-    # print(expanded)
+    includedCache[path] = expanded
     os.chdir(cwd)
     return expanded
 
