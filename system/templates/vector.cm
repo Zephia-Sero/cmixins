@@ -71,8 +71,23 @@ static inline NAME NAME_copy(NAME this)
 	return ret;
 }
 
+typedef struct NAME_slice { size_t length; TYPE *list; } NAME_slice;
+
 // [startIdx, endIdx)
-static inline NAME NAME_get_slice(NAME this, size_t startIdx, size_t endIdx)
+static inline NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endIdx)
+{
+	if (startIdx >= this.length)
+		errx(1, "Attempted slice starting at out of bounds index of NAME (%lu >= %lu)", startIdx, this.length);
+	if (endIdx > this.length)
+		errx(1, "Attempted slice ending at out of bounds index of NAME (%lu > %lu)", endIdx, this.length);
+	NAME_slice ret;
+	ret.length = endIdx - startIdx;
+	ret.list = &this.list[startIdx];
+	return ret;
+}
+
+// [startIdx, endIdx)
+static inline NAME NAME_copy_slice(NAME this, size_t startIdx, size_t endIdx)
 {
 	NAME ret;
 	ret.capacity = endIdx - startIdx;

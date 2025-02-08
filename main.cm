@@ -162,10 +162,10 @@ Vector_String get_call(String line, String *remainder)
 	if (lparenPos + 1 >= end)
 		argsStr = String_new(1);
 	else
-		argsStr = String_get_slice(line, lparenPos + 1, end);
-	String funcName = String_get_slice(line, 0, lparenPos);
+		argsStr = String_copy_slice(line, lparenPos + 1, end);
+	String funcName = String_copy_slice(line, 0, lparenPos);
 	if (end < line.length) {
-		*remainder = String_get_slice(line, end+1, line.length);
+		*remainder = String_copy_slice(line, end+1, line.length);
 	} else {
 		*remainder = String_from_cstr("\n");
 	}
@@ -193,8 +193,10 @@ Vector_String get_call(String line, String *remainder)
 String make_binary(String sourcePath)
 {
 	HKVPair_String_String *kvp = HashMap_String_String_get_kvp(binaryCache, sourcePath);
-	if (kvp)
+	if (kvp) {
+		String_free(sourcePath);
 		return kvp->value;
+	}
 	String source = String_copy(entry(sourcePath, false));
 	FILE *progStdout = popen("mktemp -t cmixins.cachedBinary.XXXXXXXX", "r");
 	if (!progStdout)
@@ -220,6 +222,7 @@ String make_binary(String sourcePath)
 		err(1, "Failed to create cc process");
 	String_push(&source, '\0');
 	fprintf(progStdout, "%s", source.list);
+	String_free(source);
 	status = pclose(progStdout);
 	if (status != 0) {
 		if (status == -1)
@@ -232,7 +235,7 @@ String make_binary(String sourcePath)
 	return binary;
 }
 
-String run_binary(String binaryPath, Vector_String args)
+String run_binary(String binaryPath, Vector_String_slice args)
 {
 	char command[65536];
 	size_t pos = snprintf(command, 65536, "%s ", String_to_cstr(binaryPath));
@@ -259,12 +262,13 @@ String run_binary(String binaryPath, Vector_String args)
 	return result;
 }
 
+
 String run_func(Vector_String args, String origin)
 {
-	String func = Vector_String_remove(&args, 0);
+	String func = args.list[0];
 	if (String_equals_cstr(func, "@""setting")) {
-		String key = args.list[0];
-		String value = args.list[1];
+		String key = args.list[1];
+		String value = args.list[2];
 		String_stripify(&key, '"');
 		String_stripify(&value, '"');
 		if (String_equals_cstr(key, "pass-limit")) {
@@ -275,48 +279,63 @@ String run_func(Vector_String args, String origin)
 				err(1, "Invalid integer literal %s for setting pass-limit", cstr);
 		}
 	} else if (String_equals_cstr(func, "@""mixin")) {
-		String file = String_copy(args.list[0]);
+		String file = String_copy(args.list[1]);
 		String_stripify(&file, '"');
 		String binary = make_binary(file);
-		Vector_String argsR = Vector_String_get_slice(args, 1, args.length);
+		Vector_String_slice argsR = Vector_String_get_slice(args, 2, args.length);
 		String result = run_binary(binary, argsR);
 		return result;
 	} else if (String_equals_cstr(func, "@""mixinsys")) {
-		String file = String_copy(args.list[0]);
+		String file = String_copy(args.list[1]);
 		String_stripify(&file, '"');
 		String prefix = String_from_cstr("/usr/local/include/cmixins/");
 		String_insert_slice(&file, prefix, 0);
 		String binary = make_binary(file);
 		String_free(prefix);
-		Vector_String argsR = Vector_String_get_slice(args, 1, args.length);
+		Vector_String_slice argsR = Vector_String_get_slice(args, 2, args.length);
 		String result = run_binary(binary, argsR);
 		return result;
 	} else if (String_equals_cstr(func, "@""include")) {
-		String file = String_copy(args.list[0]);
+		String file = String_copy(args.list[1]);
 		String_stripify(&file, '"');
 		String source = String_copy(entry(file, true));
+		String_free(file);
 		return source;
 	} else if (String_equals_cstr(func, "@""includesys")) {
-		String file = String_copy(args.list[0]);
+		String file = String_copy(args.list[1]);
 		String_stripify(&file, '"');
 		String prefix = String_from_cstr("/usr/local/include/cmixins/include/");
 		String_insert_slice(&file, prefix, 0);
+		String_free(prefix);
 		String source = String_copy(entry(file, true));
+		String_free(file);
 		return source;
 	} else if (String_equals_cstr(func, "@""embed")) {
 		Vector_String realArgs = Vector_String_new(3);
-		Vector_String_push(&realArgs, String_from_cstr("@""mixinsys"));
-		Vector_String_push(&realArgs, String_from_cstr("\"embed.cm\""));
-		Vector_String_push(&realArgs, args.list[0]);
+		String funcToCall = String_from_cstr("@""mixinsys");
+		String fileToCall = String_from_cstr("\"embed.cm\"");
+		Vector_String_push(&realArgs, funcToCall);
+		Vector_String_push(&realArgs, fileToCall);
+		Vector_String_push(&realArgs, args.list[1]);
 		origin = func;
-		return run_func(realArgs, origin);
+		String ret = run_func(realArgs, origin);
+		String_free(funcToCall);
+		String_free(fileToCall);
+		Vector_String_free(realArgs);
+		return ret;
 	} else if (String_equals_cstr(func, "@""length")) {
 		Vector_String realArgs = Vector_String_new(3);
-		Vector_String_push(&realArgs, String_from_cstr("@""mixinsys"));
-		Vector_String_push(&realArgs, String_from_cstr("\"length.cm\""));
-		Vector_String_push(&realArgs, args.list[0]);
+		String funcToCall = String_from_cstr("@""mixinsys");
+		String fileToCall = String_from_cstr("\"length.cm\"");
+		Vector_String_push(&realArgs, funcToCall);
+		Vector_String_push(&realArgs, fileToCall);
+		Vector_String_push(&realArgs, args.list[1]);
 		origin = func;
-		return run_func(realArgs, origin);
+		String ret = run_func(realArgs, origin);
+		String_free(funcToCall);
+		String_free(fileToCall);
+		Vector_String_free(realArgs);
+		return ret;
 	}
 	return func;
 }
@@ -331,9 +350,15 @@ String expand_line(String line)
 			hasMixins.list[hasMixins.length - 1] = true;
 			String right;
 			Vector_String funcCall = get_call(line, &right);
-			String left = run_func(funcCall, String_new(1));
-			String_push_slice(&left, right);
+			String origin = (String) { .capacity = 1, .length = 0, .list = "\0" };
+			String left = run_func(funcCall, origin);
+			String rightex = expand_line(right);
 			String_free(right);
+			for (size_t i = 0; i < funcCall.length; ++i)
+				String_free(funcCall.list[i]);
+			Vector_String_free(funcCall);
+			String_push_slice(&left, rightex);
+			String_free(rightex);
 			return left;
 		} else {
 			return String_copy(line);
@@ -392,7 +417,7 @@ String entry(String _path, bool isInclude)
 		return v;
 	}
 	String source = String_load_file(path);
-	String sourceDir = String_get_slice(path, 0, String_last_index_of(path, '/'));
+	String sourceDir = String_copy_slice(path, 0, String_last_index_of(path, '/'));
 
 	chdir(String_to_cstr(sourceDir));
 	Vector_bool_push(&hasMixins, true);
@@ -426,7 +451,8 @@ int main(int argc, char **argv)
 
 	String path = String_from_cstr(argv[1]);
 	String result = entry(path, false);
-	printf("%s", String_to_cstr(result));
+	String_free(path);
+	//printf("%s", String_to_cstr(result));
 
 	for (size_t i = 0; i < binaryCache.length; ++i) {
 		// if file exists...
@@ -442,6 +468,10 @@ int main(int argc, char **argv)
 		String_free(sourceCache.list[i].value);
 	}
 	HashMap_String_String_free(sourceCache);
+	for (size_t i = 0; i < binaryCache.length; ++i) {
+		String_free(binaryCache.list[i].key);
+		String_free(binaryCache.list[i].value);
+	}
 	HashMap_String_String_free(binaryCache);
 	Vector_String_free(alreadyIncluded);
 }
