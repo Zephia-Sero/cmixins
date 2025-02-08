@@ -2,3 +2,5 @@ testing/
 *.o
 *.c
 a.out
+vgcore*
+cm-2

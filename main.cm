@@ -310,6 +310,13 @@ String run_func(Vector_String args, String origin)
 		Vector_String_push(&realArgs, args.list[0]);
 		origin = func;
 		return run_func(realArgs, origin);
+	} else if (String_equals_cstr(func, "@""length")) {
+		Vector_String realArgs = Vector_String_new(3);
+		Vector_String_push(&realArgs, String_from_cstr("@""mixinsys"));
+		Vector_String_push(&realArgs, String_from_cstr("\"length.cm\""));
+		Vector_String_push(&realArgs, args.list[0]);
+		origin = func;
+		return run_func(realArgs, origin);
 	}
 	return func;
 }
