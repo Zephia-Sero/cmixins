@@ -105,7 +105,7 @@ static inline NAME NAME_remove_slice(NAME *this, size_t startIdx, size_t endIdx)
 	for (size_t i = startIdx; i < endIdx; ++i)
 		ret.list[i - startIdx] = this->list[i];
 	// shift over last elements
-	memmove(&this->list[startIdx], &this->list[endIdx], this->length - endIdx);
+	memmove(&this->list[startIdx], &this->list[endIdx], (this->length - endIdx) * sizeof(TYPE));
 	this->length -= ret.length;
 	return ret;
 }
@@ -116,7 +116,7 @@ static inline TYPE NAME_remove(NAME *this, size_t index)
 		errx(1, "Attempted remove out of bounds index of NAME (%lu >= %lu)", index, this->length);
 	// shift over last elements
 	TYPE value = this->list[index];
-	memmove(&this->list[index], &this->list[index+1], this->length - index - 1);
+	memmove(&this->list[index], &this->list[index+1], (this->length - index - 1) * sizeof(TYPE));
 	--this->length;
 	return value;
 }
@@ -134,7 +134,7 @@ static inline void NAME_insert(NAME *this, TYPE value, size_t index)
 	// handle expanding the list
 	NAME_resize_to_fit(this, this->length + 1);
 	// shift elements over to the right by one
-	memmove(&this->list[index+1], &this->list[index], this->length - index);
+	memmove(&this->list[index+1], &this->list[index], (this->length - index) * sizeof(TYPE));
 	this->list[index] = value;
 	++this->length;
 }
@@ -169,4 +169,18 @@ static inline void NAME_apply(NAME *this, TYPE (*func)(TYPE x))
 {
 	for (size_t i = 0; i < this->length; ++i)
 		this->list[i] = func(this->list[i]);
+}
+
+static inline void NAME_free(NAME *this)
+{
+	free(this->list);
+}
+static inline bool NAME_equals(NAME this, NAME other)
+{
+	if (this.length != other.length)
+		return false;
+	for (size_t i = 0; i < this.length; ++i)
+		if (this.list[i] != other.list[i])
+			return false;
+	return true;
 }

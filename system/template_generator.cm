@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 			// no recursion, so <i
 			for (int argi = 0; argi < i; ++argi) {
 				// check if the arg names match
-				if (strncmp(&argTemplates[i][j], argNames[argi], min(strlen(argTemplates[i]) - j - 1, strlen(argNames[argi]))) == 0) {
+				if (strncmp(&argTemplates[i][j], argNames[argi], strlen(argNames[argi])) == 0) {
 					// put a %n$s into the format string and increment the number of args we require
 					// 1+ since %n$s is 1-indexed
 					pos += snprintf(&fstring[pos], 4095-pos, "%%%d$s", 1 + argsNeeded++);
