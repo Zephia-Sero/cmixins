@@ -1,12 +1,13 @@
 #!/bin/env python3
 from sys import argv
 from sys import stderr
-from typing import Dict
+from typing import Dict, List
 
 passCount = []
 passLimit = 10
 hasMixins = []
 includedCache: Dict[str, str] = {}
+alreadyIncluded: List[str] = []
 binaryCache = {}
 import line_profiler
 
@@ -87,11 +88,11 @@ def run_func(args, origin=""):
         return out.decode("utf-8")
     if func == "@include":
         file = args[0][1:-1]
-        source = entry(file)
+        source = entry(file, True)
         return source
     if func == "@includesys":
         file = f"/usr/local/include/cmixins/include/{args[0][1:-1]}"
-        source = entry(file)
+        source = entry(file, True)
         return source
     if func == "@embed":
         return run_func(["@mixinsys", "\"embed.cm\"", args[0]], func)
@@ -137,12 +138,16 @@ def run_preprocessor(path):
     return out
 
 @line_profiler.profile
-def entry(path) -> str:
+def entry(path, isInclude=False) -> str:
     global passCount
     passCount.append(0)
     import os
     if not path.startswith("/"):
         path = os.getcwd() + "/" + path
+    if isInclude and path in alreadyIncluded:
+        return ""
+    elif isInclude:
+        alreadyIncluded.append(path)
     if path in includedCache.keys():
         return includedCache[path]
     source = ""
@@ -150,7 +155,8 @@ def entry(path) -> str:
         source = f.read()
     cwd = os.getcwd()
     os.chdir(os.path.dirname(path))
-    # print(os.getcwd(), "processing", path)
+    import sys
+    print(os.getcwd(), "processing", path, file=sys.stderr)
     global hasMixins
     hasMixins.append(True)
     while hasMixins[-1] and passCount[-1] < passLimit:
