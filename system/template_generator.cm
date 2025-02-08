@@ -56,10 +56,8 @@ int main(int argc, char **argv)
 	printf("\treturn b;\n");
 	printf("}\n\n");
 
-	unsigned int numOptionalArgs = maxArgs - minArgs;
 	printf("int main(int argc, char **argv)\n");
 	printf("{\n");
-
 	printf("\tif (argc < %u+1)\n", minArgs); // +1 to account for argv[0]
 	printf("\t\treturn 1;\n");
 	printf("\tif (argc > %u+1)\n", maxArgs);
