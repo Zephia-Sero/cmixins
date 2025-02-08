@@ -1,1 +1,1 @@
-@mixin("template_generator.cm", "templates/vector.cm", "TYPE", "NAME?Vector_TYPE")
+@mixin("template_generator.cm", "templates/vector.cm", "TYPE", "NAME?Vector_TYPE", "EQFUNC?TYPE_equals")

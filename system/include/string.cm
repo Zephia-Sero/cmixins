@@ -26,14 +26,14 @@ static inline void String_lowerify(String *this)
 	}
 }
 
-static inline String String_upper(String *this)
+static inline String String_upper(String this)
 {
 	String ret = String_copy(this);
 	String_upperify(&ret);
 	return ret;
 }
 
-static inline String String_lower(String *this)
+static inline String String_lower(String this)
 {
 	String ret = String_copy(this);
 	String_lowerify(&ret);
@@ -50,20 +50,54 @@ static inline String String_from_cstr(char *cstr)
 }
 
 // Not thread safe.
-static inline char *String_to_cstr(String *this)
+static inline char *String_to_cstr(String this)
 {
 	static char cstr[65536];
 	size_t i = 0;
 	for (; i < 65535; ++i) {
-		if (i >= this->length)
+		if (i >= this.length)
 			break;
-		cstr[i] = this->list[i];
+		cstr[i] = this.list[i];
 	}
 	cstr[i] = '\0';
 	return cstr;
 }
 
-
-
+static inline bool String_starts_with_cstr(String this, char const *find)
+{
+	size_t length = strlen(find);
+	if (length > this.length)
+		return false;
+	for (size_t i = 0; i < length; ++i)
+		if (this.list[i] != find[i])
+			return false;
+	return true;
+}
+static inline bool String_ends_with_cstr(String this, char const *find)
+{
+	size_t length = strlen(find);
+	if (length > this.length)
+		return false;
+	for (size_t i = this.length; i >= this.length - length; --i)
+		if (this.list[i] != find[i - (this.length - length)])
+			return false;
+	return true;
+}
+static inline bool String_equals_cstr(String this, char const *other)
+{
+	if (strlen(other) != this.length)
+		return false;
+	for (size_t i = 0; i < this.length; ++i)
+		if (this.list[i] != other[i])
+			return false;
+	return true;
+}
+static inline void String_push_cstr(String *this, char const *add)
+{
+	size_t len = strlen(add);
+	String_resize_to_fit(this, this->length + len);
+	for (size_t i = 0; i < len; ++i)
+		this->list[this->length++] = add[i];
+}
 
 #endif

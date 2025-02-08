@@ -24,39 +24,43 @@ static inline void NAME_resize_to_fit(NAME *this, size_t length)
 		this->capacity = 1;
 	while (this->capacity < length)
 		this->capacity *= 2;
-	KVPNAME *newList = realloc(this->list, this->capacity);
+	KVPNAME *newList = realloc(this->list, this->capacity * sizeof(KVPNAME));
 	if (!newList)
 		err(1, "Failed to reallocate NAME when resizing to fit %lu elements (new capacity %lu)", length, this->capacity);
 	this->list = newList;
 }
-static inline KVPNAME *NAME_get_kvp_pro(NAME *this, KEY key, uint64_t *hash, size_t *index)
+static inline KVPNAME *NAME_get_kvp_pro(NAME this, KEY key, uint64_t *hash, size_t *index)
 {
 	uint64_t _hash = FUNC(key);
 	if (hash)
 		*hash = _hash;
-	for (size_t i = 0; i < this->length; ++i) {
-		if (this->list[i].hash == _hash) {
-			if (EQFUNC(this->list[i].key, key)) {
+	for (size_t i = 0; i < this.length; ++i) {
+		if (this.list[i].hash == _hash) {
+			if (EQFUNC(this.list[i].key, key)) {
 				if (index)
 					*index = i;
-				return &this->list[i];
+				return &this.list[i];
 			}
 		}
 	}
 	return NULL;
 }
-static inline KVPNAME *NAME_get_kvp(NAME *this, KEY key)
+static inline KVPNAME *NAME_get_kvp(NAME this, KEY key)
 {
 	return NAME_get_kvp_pro(this, key, NULL, NULL);
 }
-static inline bool NAME_has_key(NAME *this, KEY key)
+static inline VALUE NAME_get_value(NAME this, KEY key)
+{
+	return NAME_get_kvp(this, key)->value;
+}
+static inline bool NAME_has_key(NAME this, KEY key)
 {
 	return NAME_get_kvp(this, key) != NULL;
 }
 static inline void NAME_set(NAME *this, KEY key, VALUE value)
 {
 	uint64_t hash;
-	KVPNAME *kvp = NAME_get_kvp_pro(this, key, &hash, NULL);
+	KVPNAME *kvp = NAME_get_kvp_pro(*this, key, &hash, NULL);
 	if (kvp) {
 		kvp->value = value;
 	} else {
@@ -71,7 +75,7 @@ static inline void NAME_set(NAME *this, KEY key, VALUE value)
 static inline KVPNAME NAME_take(NAME *this, KEY key)
 {
 	size_t index;
-	KVPNAME *kvp = NAME_get_kvp_pro(this, key, NULL, &index);
+	KVPNAME *kvp = NAME_get_kvp_pro(*this, key, NULL, &index);
 	if (!kvp)
 		errx(1, "Attempted to remove nonexistent key from NAME");
 
@@ -84,7 +88,7 @@ static inline KVPNAME NAME_take(NAME *this, KEY key)
 static inline void NAME_remove(NAME *this, KEY key)
 {
 	size_t index;
-	KVPNAME *kvp = NAME_get_kvp_pro(this, key, NULL, &index);
+	KVPNAME *kvp = NAME_get_kvp_pro(*this, key, NULL, &index);
 	if (!kvp)
 		return;
 
@@ -92,7 +96,7 @@ static inline void NAME_remove(NAME *this, KEY key)
 	memmove(&this->list[index], &this->list[index+1], (this->length - index - 1) * sizeof(KVPNAME));
 	--this->length;
 }
-static inline void NAME_free(NAME *this)
+static inline void NAME_free(NAME this)
 {
-	free(this->list);
+	free(this.list);
 }
