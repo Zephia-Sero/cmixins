@@ -150,7 +150,7 @@ def entry(path) -> str:
         source = f.read()
     cwd = os.getcwd()
     os.chdir(os.path.dirname(path))
-    print(os.getcwd(), "processing", path)
+    # print(os.getcwd(), "processing", path)
     global hasMixins
     hasMixins.append(True)
     while hasMixins[-1] and passCount[-1] < passLimit:
