@@ -32,6 +32,7 @@ typedef double f64;
 
 @includesys("basics.cm");
 
+#define String_impl
 @includesys("string.cm");
 
 // Code modified from nothings/stb/stb_image_write.h
@@ -85,10 +86,14 @@ static u32 String_crc32(String this)
 	return crc32(this.list, this.length);
 }
 
+#define HashMap_String_String_impl
 @mixinsys("hashmap.cm", "String", "String", "String_crc32", "HashMap_String_String");
 
+#define Vector_String_impl
 @mixinsys("vector.cm", "String");
+#define Vector_int_impl
 @mixinsys("vector.cm", "int");
+#define Vector_bool_impl
 @mixinsys("vector.cm", "bool");
 
 Vector_int passCount;
@@ -452,7 +457,8 @@ int main(int argc, char **argv)
 	String path = String_from_cstr(argv[1]);
 	String result = entry(path, false);
 	String_free(path);
-	//printf("%s", String_to_cstr(result));
+	String_push(&result, '\0');
+	printf("%s", result.list);
 
 	for (size_t i = 0; i < binaryCache.length; ++i) {
 		// if file exists...

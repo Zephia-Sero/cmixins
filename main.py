@@ -3,12 +3,12 @@ from sys import argv
 from sys import stderr
 from typing import Dict, List
 
-passCount = []
+passCount: List[int] = []
 passLimit = 10
-hasMixins = []
+hasMixins: List[bool] = []
 includedCache: Dict[str, str] = {}
 alreadyIncluded: List[str] = []
-binaryCache = {}
+binaryCache: Dict[str, str] = {}
 import line_profiler
 
 @line_profiler.profile
@@ -170,7 +170,7 @@ def entry(path, isInclude=False) -> str:
     return source
 
 path = argv[1]
-print(entry(path))
+print(entry(path), end="")
 
 for path in binaryCache.values():
     import os

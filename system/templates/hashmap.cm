@@ -1,3 +1,5 @@
+#ifndef NAME_H
+#define NAME_H
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -5,6 +7,20 @@
 
 typedef struct KVPNAME { uint64_t hash; KEY key; VALUE value; } KVPNAME;
 typedef struct NAME { size_t length, capacity; KVPNAME *list; } NAME;
+static inline NAME NAME_new(size_t initialCapacity);
+static inline void NAME_resize_to_fit(NAME *this, size_t length);
+static inline KVPNAME *NAME_get_kvp_pro(NAME this, KEY key, uint64_t *hash, size_t *index);
+static inline KVPNAME *NAME_get_kvp(NAME this, KEY key);
+static inline VALUE NAME_get_value(NAME this, KEY key);
+static inline bool NAME_has_key(NAME this, KEY key);
+static inline void NAME_set(NAME *this, KEY key, VALUE value);
+static inline KVPNAME NAME_take(NAME *this, KEY key);
+static inline void NAME_remove(NAME *this, KEY key);
+static inline void NAME_free(NAME this);
+
+#endif
+
+#ifdef NAME_impl
 static inline NAME NAME_new(size_t initialCapacity)
 {
 	NAME this;
@@ -100,3 +116,4 @@ static inline void NAME_free(NAME this)
 {
 	free(this.list);
 }
+#endif

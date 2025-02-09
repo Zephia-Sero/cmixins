@@ -1,4 +1,46 @@
+#ifndef NAME_H
+#define NAME_H
 typedef struct NAME { size_t length, capacity; TYPE *list; } NAME;
+static inline NAME NAME_new(size_t initialCapacity);
+static inline void NAME_resize_to_fit(NAME *this, size_t length);
+static inline void NAME_push(NAME *this, TYPE value);
+static inline TYPE NAME_pop(NAME *this);
+static inline TYPE NAME_get(NAME this, size_t index);
+static inline TYPE *NAME_getp(NAME this, size_t index);
+static inline void NAME_set(NAME *this, size_t index, TYPE value);
+static inline NAME NAME_copy(NAME this);
+typedef struct NAME_slice { size_t length; TYPE *list; } NAME_slice;
+// [startIdx, endIdx) Do not try to realloc this, this returns a pointer inside the vector's list!
+static inline NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endIdx);
+// [startIdx, endIdx)
+static inline NAME NAME_copy_slice(NAME this, size_t startIdx, size_t endIdx);
+// [startIdx, endIdx)
+static inline NAME NAME_remove_slice(NAME *this, size_t startIdx, size_t endIdx);
+// [startIdx, endIdx)
+static inline void NAME_delete_slice(NAME *this, size_t startIdx, size_t endIdx);
+static inline TYPE NAME_remove(NAME *this, size_t index);
+static inline void NAME_insert(NAME *this, TYPE value, size_t index);
+static inline void NAME_push_slice(NAME *this, NAME value);
+static inline void NAME_insert_slice(NAME *this, NAME value, size_t index);
+static inline void NAME_apply(NAME *this, TYPE (*func)(TYPE x));
+static inline void NAME_free(NAME this);
+static inline bool NAME_equals(NAME this, NAME other);
+static inline void NAME_reversify(NAME *this);
+static inline NAME NAME_reverse(NAME this);
+static inline bool NAME_contains(NAME this, TYPE value);
+static inline size_t NAME_count(NAME this, TYPE value);
+static inline ssize_t NAME_index_of(NAME this, TYPE value);
+static inline ssize_t NAME_last_index_of(NAME this, TYPE value);
+static inline bool NAME_starts_with(NAME this, NAME other);
+static inline bool NAME_ends_with(NAME this, NAME other);
+static inline size_t NAME_start_count(NAME this, TYPE find);
+static inline size_t NAME_end_count(NAME this, TYPE find);
+static inline void NAME_stripify_left(NAME *this, TYPE toRemove);
+static inline void NAME_stripify_right(NAME *this, TYPE toRemove);
+static inline void NAME_stripify(NAME *this, TYPE toRemove);
+#endif
+
+#ifdef NAME_impl
 static inline NAME NAME_new(size_t initialCapacity)
 {
 	NAME this;
@@ -70,8 +112,6 @@ static inline NAME NAME_copy(NAME this)
 	memcpy(ret.list, this.list, sizeof(TYPE) * ret.capacity);
 	return ret;
 }
-
-typedef struct NAME_slice { size_t length; TYPE *list; } NAME_slice;
 
 // [startIdx, endIdx)
 static inline NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endIdx)
@@ -315,3 +355,4 @@ static inline void NAME_stripify(NAME *this, TYPE toRemove)
 	NAME_stripify_left(this, toRemove);
 	NAME_stripify_right(this, toRemove);
 }
+#endif
