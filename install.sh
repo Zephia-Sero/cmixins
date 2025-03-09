@@ -1,3 +1,4 @@
-INSTALLDIR="/usr/local/include/cmixins/"
-sudo mkdir -p "$INSTALLDIR"
-sudo cp -rv system/* "$INSTALLDIR"
+INSTALLDIR="/usr/local/"
+sudo mkdir -p "$INSTALLDIR/include/cmixins/"
+sudo cp -rv system/* "$INSTALLDIR/include/cmixins/"
+sudo cp -v cm-2 "$INSTALLDIR/bin/cmixins"

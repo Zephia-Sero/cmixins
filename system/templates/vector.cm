@@ -1,47 +1,47 @@
 #ifndef NAME_H
 #define NAME_H
 typedef struct NAME { size_t length, capacity; TYPE *list; } NAME;
-static inline NAME NAME_new(size_t initialCapacity);
-static inline void NAME_resize_to_fit(NAME *this, size_t length);
-static inline void NAME_push(NAME *this, TYPE value);
-static inline TYPE NAME_pop(NAME *this);
-static inline TYPE NAME_get(NAME this, size_t index);
-static inline TYPE *NAME_getp(NAME this, size_t index);
-static inline void NAME_set(NAME *this, size_t index, TYPE value);
-static inline NAME NAME_copy(NAME this);
+NAME NAME_new(size_t initialCapacity);
+void NAME_resize_to_fit(NAME *this, size_t length);
+void NAME_push(NAME *this, TYPE value);
+TYPE NAME_pop(NAME *this);
+TYPE NAME_get(NAME this, size_t index);
+TYPE *NAME_getp(NAME this, size_t index);
+void NAME_set(NAME *this, size_t index, TYPE value);
+NAME NAME_copy(NAME this);
 typedef struct NAME_slice { size_t length; TYPE *list; } NAME_slice;
 // [startIdx, endIdx) Do not try to realloc this, this returns a pointer inside the vector's list!
-static inline NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endIdx);
+NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endIdx);
 // [startIdx, endIdx)
-static inline NAME NAME_copy_slice(NAME this, size_t startIdx, size_t endIdx);
+NAME NAME_copy_slice(NAME this, size_t startIdx, size_t endIdx);
 // [startIdx, endIdx)
-static inline NAME NAME_remove_slice(NAME *this, size_t startIdx, size_t endIdx);
+NAME NAME_remove_slice(NAME *this, size_t startIdx, size_t endIdx);
 // [startIdx, endIdx)
-static inline void NAME_delete_slice(NAME *this, size_t startIdx, size_t endIdx);
-static inline TYPE NAME_remove(NAME *this, size_t index);
-static inline void NAME_insert(NAME *this, TYPE value, size_t index);
-static inline void NAME_push_slice(NAME *this, NAME value);
-static inline void NAME_insert_slice(NAME *this, NAME value, size_t index);
-static inline void NAME_apply(NAME *this, TYPE (*func)(TYPE x));
-static inline void NAME_free(NAME this);
-static inline bool NAME_equals(NAME this, NAME other);
-static inline void NAME_reversify(NAME *this);
-static inline NAME NAME_reverse(NAME this);
-static inline bool NAME_contains(NAME this, TYPE value);
-static inline size_t NAME_count(NAME this, TYPE value);
-static inline ssize_t NAME_index_of(NAME this, TYPE value);
-static inline ssize_t NAME_last_index_of(NAME this, TYPE value);
-static inline bool NAME_starts_with(NAME this, NAME other);
-static inline bool NAME_ends_with(NAME this, NAME other);
-static inline size_t NAME_start_count(NAME this, TYPE find);
-static inline size_t NAME_end_count(NAME this, TYPE find);
-static inline void NAME_stripify_left(NAME *this, TYPE toRemove);
-static inline void NAME_stripify_right(NAME *this, TYPE toRemove);
-static inline void NAME_stripify(NAME *this, TYPE toRemove);
+void NAME_delete_slice(NAME *this, size_t startIdx, size_t endIdx);
+TYPE NAME_remove(NAME *this, size_t index);
+void NAME_insert(NAME *this, TYPE value, size_t index);
+void NAME_push_slice(NAME *this, NAME value);
+void NAME_insert_slice(NAME *this, NAME value, size_t index);
+void NAME_apply(NAME *this, TYPE (*func)(TYPE x));
+void NAME_free(NAME this);
+bool NAME_equals(NAME this, NAME other);
+void NAME_reversify(NAME *this);
+NAME NAME_reverse(NAME this);
+bool NAME_contains(NAME this, TYPE value);
+size_t NAME_count(NAME this, TYPE value);
+ssize_t NAME_index_of(NAME this, TYPE value);
+ssize_t NAME_last_index_of(NAME this, TYPE value);
+bool NAME_starts_with(NAME this, NAME other);
+bool NAME_ends_with(NAME this, NAME other);
+size_t NAME_start_count(NAME this, TYPE find);
+size_t NAME_end_count(NAME this, TYPE find);
+void NAME_stripify_left(NAME *this, TYPE toRemove);
+void NAME_stripify_right(NAME *this, TYPE toRemove);
+void NAME_stripify(NAME *this, TYPE toRemove);
 #endif
 
 #ifdef NAME_impl
-static inline NAME NAME_new(size_t initialCapacity)
+NAME NAME_new(size_t initialCapacity)
 {
 	NAME this;
 	this.length = 0;
@@ -52,7 +52,7 @@ static inline NAME NAME_new(size_t initialCapacity)
 	return this;
 }
 
-static inline void NAME_resize_to_fit(NAME *this, size_t length)
+void NAME_resize_to_fit(NAME *this, size_t length)
 {
 	// already the right size
 	if (length <= this->capacity)
@@ -67,41 +67,41 @@ static inline void NAME_resize_to_fit(NAME *this, size_t length)
 	this->list = newList;
 }
 
-static inline void NAME_push(NAME *this, TYPE value)
+void NAME_push(NAME *this, TYPE value)
 {
 	NAME_resize_to_fit(this, this->length + 1);
 	this->list[this->length++] = value;
 }
 
-static inline TYPE NAME_pop(NAME *this)
+TYPE NAME_pop(NAME *this)
 {
 	if (this->length == 0)
 		errx(1, "Pop attempted from empty NAME");
 	return this->list[--this->length];
 }
 
-static inline TYPE NAME_get(NAME this, size_t index)
+TYPE NAME_get(NAME this, size_t index)
 {
 	if (index >= this.length)
 		errx(1, "Attempted read from out of bounds index from NAME (%lu >= %lu)", index, this.length);
 	return this.list[index];
 }
 
-static inline TYPE *NAME_getp(NAME this, size_t index)
+TYPE *NAME_getp(NAME this, size_t index)
 {
 	if (index >= this.length)
 		errx(1, "Attempted read from out of bounds index from NAME (%lu >= %lu)", index, this.length);
 	return &this.list[index];
 }
 
-static inline void NAME_set(NAME *this, size_t index, TYPE value)
+void NAME_set(NAME *this, size_t index, TYPE value)
 {
 	if (index >= this->length)
 		errx(1, "Attempted write to out of bounds index of NAME (%lu >= %lu)", index, this->length);
 	this->list[index] = value;
 }
 
-static inline NAME NAME_copy(NAME this)
+NAME NAME_copy(NAME this)
 {
 	NAME ret;
 	ret.capacity = this.capacity;
@@ -114,7 +114,7 @@ static inline NAME NAME_copy(NAME this)
 }
 
 // [startIdx, endIdx)
-static inline NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endIdx)
+NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endIdx)
 {
 	if (startIdx >= this.length)
 		errx(1, "Attempted slice starting at out of bounds index of NAME (%lu >= %lu)", startIdx, this.length);
@@ -127,7 +127,7 @@ static inline NAME_slice NAME_get_slice(NAME this, size_t startIdx, size_t endId
 }
 
 // [startIdx, endIdx)
-static inline NAME NAME_copy_slice(NAME this, size_t startIdx, size_t endIdx)
+NAME NAME_copy_slice(NAME this, size_t startIdx, size_t endIdx)
 {
 	NAME ret;
 	ret.capacity = endIdx - startIdx;
@@ -145,7 +145,7 @@ static inline NAME NAME_copy_slice(NAME this, size_t startIdx, size_t endIdx)
 }
 
 // [startIdx, endIdx)
-static inline NAME NAME_remove_slice(NAME *this, size_t startIdx, size_t endIdx)
+NAME NAME_remove_slice(NAME *this, size_t startIdx, size_t endIdx)
 {
 	if (endIdx - startIdx == 0)
 		return NAME_new(1);
@@ -169,7 +169,7 @@ static inline NAME NAME_remove_slice(NAME *this, size_t startIdx, size_t endIdx)
 	return ret;
 }
 
-static inline void NAME_delete_slice(NAME *this, size_t startIdx, size_t endIdx)
+void NAME_delete_slice(NAME *this, size_t startIdx, size_t endIdx)
 {
 	if (endIdx - startIdx == 0)
 		return;
@@ -184,7 +184,7 @@ static inline void NAME_delete_slice(NAME *this, size_t startIdx, size_t endIdx)
 	this->length -= endIdx - startIdx;
 }
 
-static inline TYPE NAME_remove(NAME *this, size_t index)
+TYPE NAME_remove(NAME *this, size_t index)
 {
 	if (index >= this->length)
 		errx(1, "Attempted remove out of bounds index of NAME (%lu >= %lu)", index, this->length);
@@ -195,7 +195,7 @@ static inline TYPE NAME_remove(NAME *this, size_t index)
 	return value;
 }
 
-static inline void NAME_insert(NAME *this, TYPE value, size_t index)
+void NAME_insert(NAME *this, TYPE value, size_t index)
 {
 	// inserting to end should be allowed, since that's just a push
 	if (index == this->length) {
@@ -213,14 +213,14 @@ static inline void NAME_insert(NAME *this, TYPE value, size_t index)
 	++this->length;
 }
 
-static inline void NAME_push_slice(NAME *this, NAME value)
+void NAME_push_slice(NAME *this, NAME value)
 {
 	NAME_resize_to_fit(this, this->length + value.length);
 	for (size_t i = 0; i < value.length; ++i)
 		this->list[this->length++] = value.list[i];
 }
 
-static inline void NAME_insert_slice(NAME *this, NAME value, size_t index)
+void NAME_insert_slice(NAME *this, NAME value, size_t index)
 {
 	// inserting to end should be allowed, since that's just a push
 	if (index == this->length) {
@@ -239,17 +239,17 @@ static inline void NAME_insert_slice(NAME *this, NAME value, size_t index)
 	this->length += value.length;
 }
 
-static inline void NAME_apply(NAME *this, TYPE (*func)(TYPE x))
+void NAME_apply(NAME *this, TYPE (*func)(TYPE x))
 {
 	for (size_t i = 0; i < this->length; ++i)
 		this->list[i] = func(this->list[i]);
 }
 
-static inline void NAME_free(NAME this)
+void NAME_free(NAME this)
 {
 	free(this.list);
 }
-static inline bool NAME_equals(NAME this, NAME other)
+bool NAME_equals(NAME this, NAME other)
 {
 	if (this.length != other.length)
 		return false;
@@ -258,7 +258,7 @@ static inline bool NAME_equals(NAME this, NAME other)
 			return false;
 	return true;
 }
-static inline bool NAME_starts_with(NAME this, NAME other)
+bool NAME_starts_with(NAME this, NAME other)
 {
 	if (other.length > this.length)
 		return false;
@@ -267,7 +267,7 @@ static inline bool NAME_starts_with(NAME this, NAME other)
 			return false;
 	return true;
 }
-static inline bool NAME_ends_with(NAME this, NAME other)
+bool NAME_ends_with(NAME this, NAME other)
 {
 	if (other.length > this.length)
 		return false;
@@ -276,7 +276,7 @@ static inline bool NAME_ends_with(NAME this, NAME other)
 			return false;
 	return true;
 }
-static inline void NAME_reversify(NAME *this)
+void NAME_reversify(NAME *this)
 {
 	// truncation of int division is nice here since 
 	// we don't need to care about the middle value even if
@@ -287,7 +287,7 @@ static inline void NAME_reversify(NAME *this)
 		this->list[this->length - 1 - i] = backup;
 	}
 }
-static inline NAME NAME_reverse(NAME this)
+NAME NAME_reverse(NAME this)
 {
 	NAME ret = NAME_new(this.capacity);
 	ret.length = this.length;
@@ -295,14 +295,14 @@ static inline NAME NAME_reverse(NAME this)
 		ret.list[i] = this.list[this.length - 1 - i];
 	return ret;
 }
-static inline bool NAME_contains(NAME this, TYPE value)
+bool NAME_contains(NAME this, TYPE value)
 {
 	for (size_t i = 0; i < this.length; ++i)
 		if (EQFUNC(this.list[i], value))
 			return true;
 	return false;
 }
-static inline size_t NAME_count(NAME this, TYPE value)
+size_t NAME_count(NAME this, TYPE value)
 {
 	size_t ret = 0;
 	for (size_t i = 0; i < this.length; ++i)
@@ -310,47 +310,49 @@ static inline size_t NAME_count(NAME this, TYPE value)
 			++ret;
 	return ret;
 }
-static inline ssize_t NAME_index_of(NAME this, TYPE value)
+ssize_t NAME_index_of(NAME this, TYPE value)
 {
 	for (size_t i = 0; i < this.length; ++i)
 		if (EQFUNC(this.list[i], value))
 			return i;
 	return -1;
 }
-static inline ssize_t NAME_last_index_of(NAME this, TYPE value)
+ssize_t NAME_last_index_of(NAME this, TYPE value)
 {
 	for (size_t i = this.length - 1; i != SIZE_MAX; --i)
 		if (EQFUNC(this.list[i], value))
 			return i;
 	return -1;
 }
-static inline size_t NAME_start_count(NAME this, TYPE find)
+size_t NAME_start_count(NAME this, TYPE find)
 {
 	for (size_t i = 0; i < this.length; ++i)
 		if (!EQFUNC(this.list[i], find))
 			return i;
+	return 0;
 }
-static inline size_t NAME_end_count(NAME this, TYPE find)
+size_t NAME_end_count(NAME this, TYPE find)
 {
 	for (size_t i = this.length - 1; i != SIZE_MAX; --i)
 		if (!EQFUNC(this.list[i], find))
 			return (this.length - 1) - i;
+	return 0;
 }
-static inline void NAME_stripify_left(NAME *this, TYPE toRemove)
+void NAME_stripify_left(NAME *this, TYPE toRemove)
 {
 	size_t count = NAME_start_count(*this, toRemove);
 	if (count == 0)
 		return;
 	NAME_delete_slice(this, 0, count);
 }
-static inline void NAME_stripify_right(NAME *this, TYPE toRemove)
+void NAME_stripify_right(NAME *this, TYPE toRemove)
 {
 	size_t count = NAME_end_count(*this, toRemove);
 	if (count == 0)
 		return;
 	NAME_delete_slice(this, this->length - count, this->length);
 }
-static inline void NAME_stripify(NAME *this, TYPE toRemove)
+void NAME_stripify(NAME *this, TYPE toRemove)
 {
 	NAME_stripify_left(this, toRemove);
 	NAME_stripify_right(this, toRemove);

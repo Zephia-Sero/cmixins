@@ -7,21 +7,21 @@
 
 typedef struct KVPNAME { uint64_t hash; KEY key; VALUE value; } KVPNAME;
 typedef struct NAME { size_t length, capacity; KVPNAME *list; } NAME;
-static inline NAME NAME_new(size_t initialCapacity);
-static inline void NAME_resize_to_fit(NAME *this, size_t length);
-static inline KVPNAME *NAME_get_kvp_pro(NAME this, KEY key, uint64_t *hash, size_t *index);
-static inline KVPNAME *NAME_get_kvp(NAME this, KEY key);
-static inline VALUE NAME_get_value(NAME this, KEY key);
-static inline bool NAME_has_key(NAME this, KEY key);
-static inline void NAME_set(NAME *this, KEY key, VALUE value);
-static inline KVPNAME NAME_take(NAME *this, KEY key);
-static inline void NAME_remove(NAME *this, KEY key);
-static inline void NAME_free(NAME this);
+NAME NAME_new(size_t initialCapacity);
+void NAME_resize_to_fit(NAME *this, size_t length);
+KVPNAME *NAME_get_kvp_pro(NAME this, KEY key, uint64_t *hash, size_t *index);
+KVPNAME *NAME_get_kvp(NAME this, KEY key);
+VALUE NAME_get_value(NAME this, KEY key);
+bool NAME_has_key(NAME this, KEY key);
+void NAME_set(NAME *this, KEY key, VALUE value);
+KVPNAME NAME_take(NAME *this, KEY key);
+void NAME_remove(NAME *this, KEY key);
+void NAME_free(NAME this);
 
 #endif
 
 #ifdef NAME_impl
-static inline NAME NAME_new(size_t initialCapacity)
+NAME NAME_new(size_t initialCapacity)
 {
 	NAME this;
 	this.length = 0;
@@ -31,7 +31,7 @@ static inline NAME NAME_new(size_t initialCapacity)
 		err(1, "Failed to allocate NAME when constructing");
 	return this;
 }
-static inline void NAME_resize_to_fit(NAME *this, size_t length)
+void NAME_resize_to_fit(NAME *this, size_t length)
 {
 	// already the right size
 	if (length <= this->capacity)
@@ -45,7 +45,7 @@ static inline void NAME_resize_to_fit(NAME *this, size_t length)
 		err(1, "Failed to reallocate NAME when resizing to fit %lu elements (new capacity %lu)", length, this->capacity);
 	this->list = newList;
 }
-static inline KVPNAME *NAME_get_kvp_pro(NAME this, KEY key, uint64_t *hash, size_t *index)
+KVPNAME *NAME_get_kvp_pro(NAME this, KEY key, uint64_t *hash, size_t *index)
 {
 	uint64_t _hash = FUNC(key);
 	if (hash)
@@ -61,19 +61,19 @@ static inline KVPNAME *NAME_get_kvp_pro(NAME this, KEY key, uint64_t *hash, size
 	}
 	return NULL;
 }
-static inline KVPNAME *NAME_get_kvp(NAME this, KEY key)
+KVPNAME *NAME_get_kvp(NAME this, KEY key)
 {
 	return NAME_get_kvp_pro(this, key, NULL, NULL);
 }
-static inline VALUE NAME_get_value(NAME this, KEY key)
+VALUE NAME_get_value(NAME this, KEY key)
 {
 	return NAME_get_kvp(this, key)->value;
 }
-static inline bool NAME_has_key(NAME this, KEY key)
+bool NAME_has_key(NAME this, KEY key)
 {
 	return NAME_get_kvp(this, key) != NULL;
 }
-static inline void NAME_set(NAME *this, KEY key, VALUE value)
+void NAME_set(NAME *this, KEY key, VALUE value)
 {
 	uint64_t hash;
 	KVPNAME *kvp = NAME_get_kvp_pro(*this, key, &hash, NULL);
@@ -88,7 +88,7 @@ static inline void NAME_set(NAME *this, KEY key, VALUE value)
 		};
 	}
 }
-static inline KVPNAME NAME_take(NAME *this, KEY key)
+KVPNAME NAME_take(NAME *this, KEY key)
 {
 	size_t index;
 	KVPNAME *kvp = NAME_get_kvp_pro(*this, key, NULL, &index);
@@ -101,7 +101,7 @@ static inline KVPNAME NAME_take(NAME *this, KEY key)
 	--this->length;
 	return ret;
 }
-static inline void NAME_remove(NAME *this, KEY key)
+void NAME_remove(NAME *this, KEY key)
 {
 	size_t index;
 	KVPNAME *kvp = NAME_get_kvp_pro(*this, key, NULL, &index);
@@ -112,7 +112,7 @@ static inline void NAME_remove(NAME *this, KEY key)
 	memmove(&this->list[index], &this->list[index+1], (this->length - index - 1) * sizeof(KVPNAME));
 	--this->length;
 }
-static inline void NAME_free(NAME this)
+void NAME_free(NAME this)
 {
 	free(this.list);
 }

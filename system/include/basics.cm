@@ -1,11 +1,5 @@
 #include <stdbool.h>
 
-#define PRIMITIVE_EQUALS(type) \
-static inline type type##_equals(type a, type b) \
-{ \
-	return a == b; \
-}
-
-PRIMITIVE_EQUALS(bool);
-PRIMITIVE_EQUALS(int);
-PRIMITIVE_EQUALS(char);
+#define bool_equals(a,b) (a==b)
+#define int_equals(a,b) (a==b)
+#define char_equals(a,b) (a==b)

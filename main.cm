@@ -103,27 +103,6 @@ HashMap_String_String sourceCache;
 Vector_String alreadyIncluded;
 HashMap_String_String binaryCache;
 
-String String_load_file(String path)
-{
-	char *pathcstr = String_to_cstr(path);
-	FILE *f = fopen(pathcstr, "r");
-	if (!f)
-		err(1, "Failed to open %s for reading", pathcstr);
-	fseek(f, 0, SEEK_END);
-	size_t len = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	String ret;
-	ret.length = len;
-	ret.capacity = len;
-	ret.list = malloc(sizeof(char) * len);
-	if (!ret.list)
-		err(1, "Failed to allocate %lu bytes to read file %s", len, pathcstr);
-	if (fread(ret.list, 1, len, f) != len)
-		err(1, "Failed to read all %lu bytes from %s", len, pathcstr);
-	fclose(f);
-	return ret;
-}
-
 String entry(String path, bool isInclude);
 
 static bool valid_func(String line)
@@ -202,7 +181,7 @@ String make_binary(String sourcePath)
 		String_free(sourcePath);
 		return kvp->value;
 	}
-	String source = String_copy(entry(sourcePath, false));
+	String source = entry(sourcePath, false);
 	FILE *progStdout = popen("mktemp -t cmixins.cachedBinary.XXXXXXXX", "r");
 	if (!progStdout)
 		err(1, "Failed to create mktemp process");
@@ -303,7 +282,7 @@ String run_func(Vector_String args, String origin)
 	} else if (String_equals_cstr(func, "@""include")) {
 		String file = String_copy(args.list[1]);
 		String_stripify(&file, '"');
-		String source = String_copy(entry(file, true));
+		String source = entry(file, true);
 		String_free(file);
 		return source;
 	} else if (String_equals_cstr(func, "@""includesys")) {
@@ -312,7 +291,7 @@ String run_func(Vector_String args, String origin)
 		String prefix = String_from_cstr("/usr/local/include/cmixins/include/");
 		String_insert_slice(&file, prefix, 0);
 		String_free(prefix);
-		String source = String_copy(entry(file, true));
+		String source = entry(file, true);
 		String_free(file);
 		return source;
 	} else if (String_equals_cstr(func, "@""embed")) {
@@ -435,7 +414,7 @@ String entry(String _path, bool isInclude)
 	Vector_int_pop(&passCount);
 	Vector_bool_pop(&hasMixins);
 
-	HashMap_String_String_set(&sourceCache, path, source);
+	HashMap_String_String_set(&sourceCache, path, String_copy(source));
 
 	chdir(String_to_cstr(cwd));
 	String_free(cwd);
@@ -446,7 +425,7 @@ String entry(String _path, bool isInclude)
 int main(int argc, char **argv)
 {
 	if (argc != 2)
-		return 1;
+		errx(1, "No file provided");
 
 	passCount = Vector_int_new(1);
 	hasMixins = Vector_bool_new(1);
@@ -459,6 +438,7 @@ int main(int argc, char **argv)
 	String_free(path);
 	String_push(&result, '\0');
 	printf("%s", result.list);
+	String_free(result);
 
 	for (size_t i = 0; i < binaryCache.length; ++i) {
 		// if file exists...
